@@ -19,4 +19,5 @@ dependencies:
   - pip:
       - -r requirements.txt
       # Change version if not compatible with current system - Note that cuda111 supports CUDA 11.3
-      - --upgrade jax jaxlib==0.1.69+cuda111 -f https://storage.googleapis.com/jax-releases/jax_releases.html
+      - jax -f https://storage.googleapis.com/jax-releases/jax_releases.html
+      - jaxlib==0.1.69+cuda111 -f https://storage.googleapis.com/jax-releases/jax_releases.html
