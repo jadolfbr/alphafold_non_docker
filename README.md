@@ -189,19 +189,19 @@ will download parameters for:
     ```bash
     Usage: run_alphafold.sh <OPTIONS>
     Required Parameters:
-    -d <data_dir>     Path to directory of supporting data
+    -d <data_dir>     Path to directory with supporting data: AlphaFold parameters and genetic and template databases. Set to the target of download_all_databases.sh.
     -o <output_dir>   Path to a directory that will store the results.
-    -f <fasta_path>   Path to a FASTA file containing one sequence.
-    -i <is_prokaryote>   Optional for multimer system, not used by the single chain system. This should contain a boolean specifying true where the target complex is from a prokaryote, and false where it is not, or where the origin is unknown. These values determine the pairing method for the MSA.
+    -f <fasta_path>   Path to a FASTA file containing a single sequence.
     -t <max_template_date> Maximum template release date to consider (ISO-8601 format: YYYY-MM-DD). Important if folding historical test sets.
     Optional Parameters:
     -n <openmm_threads>   OpenMM threads (default: all available cores)
     -b <benchmark>    Run multiple JAX model evaluations to obtain a timing that excludes the compilation time, which should be more indicative of the time required for inferencing many proteins (default: false)
     -g <use_gpu>      Enable NVIDIA runtime to run with GPUs (default: true)
+    -a <gpu_devices>  Comma separated list of devices to pass to 'CUDA_VISIBLE_DEVICES' (default: 0)
     -m <model_preset>  Choose preset model configuration - the monomer model (monomer), the monomer model with extra ensembling (monomer_casp14), monomer model with pTM head (monomer_ptm), or multimer model (multimer) (default: monomer)
     -p <db_preset>       Choose preset MSA database configuration - smaller genetic database config (reduced_dbs) or full genetic database config (full_dbs) (default: full_dbs)
-    -a <gpu_devices>  Comma separated list of devices to pass to 'CUDA_VISIBLE_DEVICES' (default: 0)
     -u <use_precomputed_msas>       Choose preset MSA database configuration - smaller genetic database config (reduced_dbs) or full genetic database config (full_dbs) (default: full_dbs)
+    -i <is_prokaryote>   Optional for multimer system, not used by the single chain system. This should contain a boolean specifying true where the target complex is from a prokaryote, and false where it is not, or where the origin is unknown. These values determine the pairing method for the MSA (default: false)
     ```
 
 7. Run `run_alphafold.sh` pointing to a FASTA file containing the protein

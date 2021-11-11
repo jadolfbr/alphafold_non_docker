@@ -20,7 +20,7 @@ usage() {
   echo "-m <model_preset>  Choose preset model configuration - the monomer model (monomer), the monomer model with extra ensembling (monomer_casp14), monomer model with pTM head (monomer_ptm), or multimer model (multimer) (default: monomer)"
   echo "-p <db_preset>       Choose preset MSA database configuration - smaller genetic database config (reduced_dbs) or full genetic database config (full_dbs) (default: full_dbs)"
   echo "-u <use_precomputed_msas>       Choose preset MSA database configuration - smaller genetic database config (reduced_dbs) or full genetic database config (full_dbs) (default: full_dbs)"
-  echo "-i <is_prokaryote>   Optional for multimer system, not used by the single chain system. This should contain a boolean specifying true where the target complex is from a prokaryote, and false where it is not, or where the origin is unknown. These values determine the pairing method for the MSA."
+  echo "-i <is_prokaryote>   Optional for multimer system, not used by the single chain system. This should contain a boolean specifying true where the target complex is from a prokaryote, and false where it is not, or where the origin is unknown. These values determine the pairing method for the MSA (default: false)"
   echo ""
   exit 1
 }
