@@ -182,7 +182,7 @@ will download parameters for:
 
 4. Apply OpenMM patch:
     ```bash
-    cd ~/miniconda3/envs/alphafold/lib/python3.8/site-packages/ && patch -p0 < "$AF2_DIR"/patches/openmm.patch
+    cd ~/miniconda3/envs/alphafold_non_docker/lib/python3.8/site-packages/ && patch -p0 < "$AF2_DIR"/patches/openmm.patch
     ```
    
 5. Reference our custom [Bash script](run_alphafold.sh) to run AlphaFold:
