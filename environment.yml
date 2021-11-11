@@ -18,6 +18,6 @@ dependencies:
   - aria2==1.34.0
   - pip:
       - -r requirements.txt
-      # Change version if not compatible with current system - Note that cuda111 supports CUDA 11.3
+      # Change versions if not compatible with current system - Note that cuda111 supports CUDA 11.3
       - jax -f https://storage.googleapis.com/jax-releases/jax_releases.html
       - jaxlib==0.1.69+cuda111 -f https://storage.googleapis.com/jax-releases/jax_releases.html
