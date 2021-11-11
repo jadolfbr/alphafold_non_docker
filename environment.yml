@@ -1,4 +1,4 @@
-name: DeepInteract
+name: alphafold_non_docker
 channels:
   - pytorch
   - conda-forge
