@@ -33,7 +33,6 @@ setup(
         'chex',
         'dm-haiku',
         'dm-tree',
-        'docker',
         'immutabledict',
         'jax',
         'ml-collections',

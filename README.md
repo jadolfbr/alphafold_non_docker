@@ -1,6 +1,6 @@
 ![header](imgs/header.jpg)
 
-# AlphaFold
+# AlphaFold (Non-Docker)
 
 This package provides an implementation of the inference pipeline of AlphaFold
 v2.0. This is a completely new model that was entered in CASP14 and published in
@@ -10,8 +10,6 @@ of this document.
 We also provide an implementation of AlphaFold-Multimer. This represents a work
 in progress and AlphaFold-Multimer isn't expected to be as stable as our monomer
 AlphaFold system.
-[Read the guide](#updating-existing-alphafold-installation-to-include-alphafold-multimers)
-for how to upgrade and update code.
 
 Any publication that discloses findings arising from using this source code or the model parameters should [cite](#citing-this-work) the
 [AlphaFold  paper](https://doi.org/10.1038/s41586-021-03819-2) and, if
@@ -32,30 +30,8 @@ or community-supported versions (see below).
 
 The following steps are required in order to run AlphaFold:
 
-1.  Install [Docker](https://www.docker.com/).
-    *   Install
-        [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
-        for GPU support.
-    *   Setup running
-        [Docker as a non-root user](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user).
 1.  Download genetic databases (see below).
 1.  Download model parameters (see below).
-1.  Check that AlphaFold will be able to use a GPU by running:
-
-    ```bash
-    docker run --rm --gpus all nvidia/cuda:11.0-base nvidia-smi
-    ```
-
-    The output of this command should show a list of your GPUs. If it doesn't,
-    check if you followed all steps correctly when setting up the
-    [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html)
-    or take a look at the following
-    [NVIDIA Docker issue](https://github.com/NVIDIA/nvidia-docker/issues/1447#issuecomment-801479573).
-
-If you wish to run AlphaFold using Singularity (a common containerization platform on HPC systems) we recommend using some of the
-third party Singularity setups as linked in
-https://github.com/deepmind/alphafold/issues/10 or
-https://github.com/deepmind/alphafold/issues/24.
 
 ### Genetic databases
 
@@ -91,10 +67,6 @@ and set up all of these databases:
 
     will download a reduced version of the databases to be used with the
     `reduced_dbs` database preset.
-
-:ledger: **Note: The download directory `<DOWNLOAD_DIR>` should _not_ be a
-subdirectory in the AlphaFold repository directory.** If it is, the Docker build
-will be slow as the large databases will be copied during the image creation.
 
 We don't provide exactly the database versions used in CASP14 – see the [note on
 reproducibility](#note-on-reproducibility). Some of the databases are mirrored
@@ -163,75 +135,77 @@ will download parameters for:
 *   5 AlphaFold-Multimer models that produce pTM and PAE values alongside their
     structure predictions.
 
-### Updating existing AlphaFold installation to include AlphaFold-Multimers
-
-If you have AlphaFold v2.0.0 or v2.0.1 you can either reinstall AlphaFold fully
-from scratch (remove everything and run the setup from scratch) or you can do an
-incremental update that will be significantly faster but will require a bit more
-work. Make sure you follow these steps in the exact order they are listed below:
-
-1.  **Update the code.**
-    *   Go to the directory with the cloned AlphaFold repository and run
-        `git fetch origin main` to get all code updates.
-1.  **Download the UniProt and PDB seqres databases.**
-    *   Run `scripts/download_uniprot.sh <DOWNLOAD_DIR>`.
-    *   Remove `<DOWNLOAD_DIR>/pdb_mmcif`. It is needed to have PDB SeqRes and
-        PDB from exactly the same date. Failure to do this step will result in
-        potential errors when searching for templates when running
-        AlphaFold-Multimer.
-    *   Run `scripts/download_pdb_mmcif.sh <DOWNLOAD_DIR>`.
-    *   Run `scripts/download_pdb_seqres.sh <DOWNLOAD_DIR>`.
-1.  **Update the model parameters.**
-    *   Remove the old model parameters in `<DOWNLOAD_DIR>/params`.
-    *   Download new model parameters using
-        `scripts/download_alphafold_params.sh <DOWNLOAD_DIR>`.
-1.  **Follow [Running AlphaFold](#running-alphafold).**
-
-#### API changes between v2.0.0 and v2.1.0
-
-We tried to keep the API as much backwards compatible as possible, but we had to
-change the following:
-
-*   The `RunModel.predict()` now needs a `random_seed` argument as MSA sampling
-    happens inside the Multimer model.
-*   The `preset` flag in `run_alphafold.py` and `run_docker.py` was split into
-    `db_preset` and `model_preset`.
-*   The models to use are not specified using `model_names` but rather using the
-    `model_preset` flag. If you want to customize which models are used for each
-    preset, you will have to modify the the `MODEL_PRESETS` dictionary in
-    `alphafold/model/config.py`.
-*   Setting the `data_dir` flag is now needed when using `run_docker.py`.
-
 
 ## Running AlphaFold
-
-**The simplest way to run AlphaFold is using the provided Docker script.** This
-was tested on Google Cloud with a machine using the `nvidia-gpu-cloud-image`
-with 12 vCPUs, 85 GB of RAM, a 100 GB boot disk, the databases on an additional
-3 TB disk, and an A100 GPU.
-
-1.  Clone this repository and `cd` into it.
+    
+1. Install Miniconda:
 
     ```bash
-    git clone https://github.com/deepmind/alphafold.git
-    ```
+    # Retrieve Miniconda:
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+   
+    # Install Miniconda:
+    bash Miniconda3-latest-Linux-x86_64.sh
+   
+    # Remaining instructions assume Miniconda is installed to '~/miniconda3'
+     ```
 
-1.  Build the Docker image:
-
-    ```bash
-    docker build -f docker/Dockerfile -t alphafold .
-    ```
-
-1.  Install the `run_docker.py` dependencies. Note: You may optionally wish to
-    create a
-    [Python Virtual Environment](https://docs.python.org/3/tutorial/venv.html)
-    to prevent conflicts with your system's Python environment.
+2. Install and configure Conda environment:
 
     ```bash
-    pip3 install -r docker/requirements.txt
+    # Clone this repository:
+    git clone https://github.com/amorehead/alphafold_multimer_non_docker
+    
+    # Change to project directory:
+    cd alphafold_multimer_non_docker
+    AF2_DIR=$(pwd)
+    
+    # Set up Conda environment locally:
+    conda env create --name alphafold_multimer_non_docker -f environment.yml
+   
+    # Update Conda post-install:
+    conda update -n base conda
+    
+    # Activate Conda environment located in the current directory:
+    conda activate alphafold_multimer_non_docker
+   
+    # (Optional) Perform a full install of the pip dependencies described in 'requirements.txt':
+    pip3 install -r requirements.txt
+    
+    # (Optional) To remove the long Conda environment prefix in your shell prompt, modify the env_prompt setting in your .condarc file with:
+    conda config --set env_prompt '({name})'
+     ```
+
+3. Download chemical properties to common directory:
+    ```bash
+    wget -q -P "$AF2_DIR"/alphafold/common/ https://git.scicore.unibas.ch/schwede/openstructure/-/raw/7102c63615b64735c4941278d92b554ec94415f8/modules/mol/alg/src/stereo_chemical_props.txt
     ```
 
-1.  Run `run_docker.py` pointing to a FASTA file containing the protein
+4. Apply OpenMM patch:
+    ```bash
+    cd ~/miniconda3/envs/alphafold/lib/python3.8/site-packages/ && patch -p0 < "$AF2_DIR"/patches/openmm.patch
+    ```
+   
+5. Reference our custom [Bash script](run_alphafold.sh) to run AlphaFold:
+    ```bash
+    Usage: run_alphafold.sh <OPTIONS>
+    Required Parameters:
+    -d <data_dir>     Path to directory of supporting data
+    -o <output_dir>   Path to a directory that will store the results.
+    -f <fasta_path>   Path to a FASTA file containing one sequence.
+    -i <is_prokaryote>   Optional for multimer system, not used by the single chain system. This should contain a boolean specifying true where the target complex is from a prokaryote, and false where it is not, or where the origin is unknown. These values determine the pairing method for the MSA.
+    -t <max_template_date> Maximum template release date to consider (ISO-8601 format: YYYY-MM-DD). Important if folding historical test sets.
+    Optional Parameters:
+    -n <openmm_threads>   OpenMM threads (default: all available cores)
+    -b <benchmark>    Run multiple JAX model evaluations to obtain a timing that excludes the compilation time, which should be more indicative of the time required for inferencing many proteins (default: false)
+    -g <use_gpu>      Enable NVIDIA runtime to run with GPUs (default: true)
+    -m <model_preset>  Choose preset model configuration - the monomer model (monomer), the monomer model with extra ensembling (monomer_casp14), monomer model with pTM head (monomer_ptm), or multimer model (multimer) (default: monomer)
+    -p <db_preset>       Choose preset MSA database configuration - smaller genetic database config (reduced_dbs) or full genetic database config (full_dbs) (default: full_dbs)
+    -a <gpu_devices>  Comma separated list of devices to pass to 'CUDA_VISIBLE_DEVICES' (default: 0)
+    -u <use_precomputed_msas>       Choose preset MSA database configuration - smaller genetic database config (reduced_dbs) or full genetic database config (full_dbs) (default: full_dbs)
+    ```
+
+7. Run `run_alphafold.sh` pointing to a FASTA file containing the protein
     sequence(s) for which you wish to predict the structure. If you are
     predicting the structure of a protein that is already in PDB and you wish to
     avoid using it as a template, then `max_template_date` must be set to be
@@ -240,19 +214,20 @@ with 12 vCPUs, 85 GB of RAM, a 100 GB boot disk, the databases on an additional
     T1050 CASP14 target:
 
     ```bash
-    python3 docker/run_docker.py \
-      --fasta_paths=T1050.fasta \
-      --max_template_date=2020-05-14 \
-      --data_dir=$DOWNLOAD_DIR
+    bash run_alphafold.sh \
+      -d $DOWNLOAD_DIR \
+      -o $OUTPUT_DIR \
+      -f T1050.fasta \
+      -t 2020-05-14
     ```
 
-    By default, Alphafold will attempt to use all visible GPU devices. To use a
+    By default, Alphafold will attempt to use the first visible GPU device. To use a
     subset, specify a comma-separated list of GPU UUID(s) or index(es) using the
     `--gpu_devices` flag. See
     [GPU enumeration](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/user-guide.html#gpu-enumeration)
     for more details.
 
-1.  You can control which AlphaFold model to run by adding the
+8. You can control which AlphaFold model to run by adding the
     `--model_preset=` flag. We provide the following models:
 
     * **monomer**: This is the original model used at CASP14 with no ensembling.
@@ -271,7 +246,7 @@ with 12 vCPUs, 85 GB of RAM, a 100 GB boot disk, the databases on an additional
       To use this model, provide a multi-sequence FASTA file. In addition, the
       UniProt database should have been downloaded.
 
-1.  You can control MSA speed/quality tradeoff by adding
+9. You can control MSA speed/quality tradeoff by adding
     `--db_preset=reduced_dbs` or `--db_preset=full_dbs` to the run command. We
     provide the following presets:
 
@@ -285,12 +260,13 @@ with 12 vCPUs, 85 GB of RAM, a 100 GB boot disk, the databases on an additional
     `reduced_dbs` data preset would look like this:
 
     ```bash
-    python3 docker/run_docker.py \
-      --fasta_paths=T1050.fasta \
-      --max_template_date=2020-05-14 \
-      --model_preset=monomer \
-      --db_preset=reduced_dbs \
-      --data_dir=$DOWNLOAD_DIR
+    bash run_alphafold.sh \
+      -d $DOWNLOAD_DIR \
+      -o $OUTPUT_DIR \
+      -f T1050.fasta \
+      -t 2020-05-14 \
+      -m monomer \
+      -p reduced_dbs
     ```
 
 ### Running AlphaFold-Multimer
@@ -299,19 +275,20 @@ All steps are the same as when running the monomer system, but you will have to
 
 *   provide an input fasta with multiple sequences,
 *   set `--model_preset=multimer`,
-*   optionally set the `--is_prokaryote_list` flag with booleans that determine
-    whether all input sequences in the given fasta file are prokaryotic. If that
-    is not the case or the origin is unknown, set to `false` for that fasta.
+*   optionally set the `--is_prokaryote` flag with a boolean that determines
+    whether the input sequence in the given fasta file is prokaryotic. If that
+    is not the case or the origin is unknown, set to `false` for the fasta.
 
 An example that folds a protein complex `multimer.fasta` that is prokaryotic:
 
 ```bash
-python3 docker/run_docker.py \
-  --fasta_paths=multimer.fasta \
-  --is_prokaryote_list=true \
-  --max_template_date=2020-05-14 \
-  --model_preset=multimer \
-  --data_dir=$DOWNLOAD_DIR
+bash run_alphafold.sh \
+  -d $DOWNLOAD_DIR \
+  -o $OUTPUT_DIR \
+  -f multimer.fasta \
+  -t 2020-05-14 \
+  -m multimer \
+  -i true
 ```
 
 ### Examples
@@ -330,11 +307,12 @@ Say we have a monomer with the sequence `<SEQUENCE>`. The input fasta should be:
 Then run the following command:
 
 ```bash
-python3 docker/run_docker.py \
-  --fasta_paths=monomer.fasta \
-  --max_template_date=2021-11-01 \
-  --model_preset=monomer \
-  --data_dir=$DOWNLOAD_DIR
+bash run_alphafold.sh \
+  -d $DOWNLOAD_DIR \
+  -o $OUTPUT_DIR \
+  -f monomer.fasta \
+  -t 2021-11-01 \
+  -m monomer
 ```
 
 #### Folding a homomer
@@ -354,12 +332,13 @@ Say we have a homomer from a prokaryote with 3 copies of the same sequence
 Then run the following command:
 
 ```bash
-python3 docker/run_docker.py \
-  --fasta_paths=homomer.fasta \
-  --is_prokaryote_list=true \
-  --max_template_date=2021-11-01 \
-  --model_preset=multimer \
-  --data_dir=$DOWNLOAD_DIR
+bash run_alphafold.sh \
+  -d $DOWNLOAD_DIR \
+  -o $OUTPUT_DIR \
+  -f homomer.fasta \
+  -t 2021-11-01 \
+  -m multimer \
+  -i true
 ```
 
 #### Folding a heteromer
@@ -383,50 +362,22 @@ Say we have a heteromer A2B3 of unknown origin, i.e. with 2 copies of
 Then run the following command:
 
 ```bash
-python3 docker/run_docker.py \
-  --fasta_paths=heteromer.fasta \
-  --is_prokaryote_list=false \
-  --max_template_date=2021-11-01 \
-  --model_preset=multimer \
-  --data_dir=$DOWNLOAD_DIR
-```
-
-#### Folding multiple monomers one after another
-
-Say we have a two monomers, `monomer1.fasta` and `monomer2.fasta`.
-
-We can fold both sequentially by using the following command:
-
-```bash
-python3 docker/run_docker.py \
-  --fasta_paths=monomer1.fasta,monomer2.fasta \
-  --max_template_date=2021-11-01 \
-  --model_preset=monomer \
-  --data_dir=$DOWNLOAD_DIR
-```
-
-#### Folding multiple multimers one after another
-
-Say we have a two multimers, `multimer1.fasta` and `multimer2.fasta`. Both are
-from a prokaryotic organism.
-
-We can fold both sequentially by using the following command:
-
-```bash
-python3 docker/run_docker.py \
-  --fasta_paths=multimer1.fasta,multimer2.fasta \
-  --is_prokaryote_list=true,true \
-  --max_template_date=2021-11-01 \
-  --model_preset=multimer \
-  --data_dir=$DOWNLOAD_DIR
+bash run_alphafold.sh \
+  -d $DOWNLOAD_DIR \
+  -o $OUTPUT_DIR \
+  -f heteromer.fasta \
+  -t 2021-11-01 \
+  -m multimer \
+  -i false
 ```
 
 ### AlphaFold output
 
 The outputs will be saved in a subdirectory of the directory provided via the
-`--output_dir` flag of `run_docker.py` (defaults to `/tmp/alphafold/`). The
-outputs include the computed MSAs, unrelaxed structures, relaxed structures,
-ranked structures, raw model outputs, prediction metadata, and section timings.
+`--output_dir` flag of `run_alphafold.sh`. The  outputs include the computed MSAs,
+unrelaxed structures, relaxed structures, ranked structures, raw model outputs,
+prediction metadata, and section timings.
+
 The `--output_dir` directory will have the following structure:
 
 ```
@@ -598,7 +549,6 @@ and packages:
 *   [Biopython](https://biopython.org)
 *   [Chex](https://github.com/deepmind/chex)
 *   [Colab](https://research.google.com/colaboratory/)
-*   [Docker](https://www.docker.com)
 *   [HH Suite](https://github.com/soedinglab/hh-suite)
 *   [HMMER Suite](http://eddylab.org/software/hmmer)
 *   [Haiku](https://github.com/deepmind/dm-haiku)
