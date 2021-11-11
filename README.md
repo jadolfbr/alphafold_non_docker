@@ -157,17 +157,17 @@ will download parameters for:
     git clone https://github.com/amorehead/alphafold_multimer_non_docker
     
     # Change to project directory:
-    cd alphafold_multimer_non_docker
+    cd alphafold_non_docker
     AF2_DIR=$(pwd)
     
     # Set up Conda environment locally:
-    conda env create --name alphafold_multimer_non_docker -f environment.yml
+    conda env create --name alphafold_non_docker -f environment.yml
    
     # Update Conda post-install:
     conda update -n base conda
     
     # Activate Conda environment located in the current directory:
-    conda activate alphafold_multimer_non_docker
+    conda activate alphafold_non_docker
    
     # (Optional) Perform a full install of the pip dependencies described in 'requirements.txt':
     pip3 install -r requirements.txt
