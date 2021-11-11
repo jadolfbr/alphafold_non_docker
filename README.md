@@ -146,9 +146,8 @@ will download parameters for:
    
     # Install Miniconda:
     bash Miniconda3-latest-Linux-x86_64.sh
-   
-    # Remaining instructions assume Miniconda is installed to '~/miniconda3'
      ```
+- Remaining instructions assume Miniconda is now installed to '~/miniconda3'
 
 2. Install and configure Conda environment:
 
