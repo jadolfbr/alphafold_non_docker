@@ -269,7 +269,8 @@ def predict_structure(
 
   ranking_output_path = os.path.join(output_dir, 'ranking_debug.json')
   with open(ranking_output_path, 'w') as f:
-    label = 'iptm+ptm' if 'iptm' in prediction_result else 'plddts'
+    # Use the multimer flag as a proxy for determining whether the model(s) predicted TM-scores.
+    label = 'iptm+ptm' if 'multimer' in FLAGS.model_preset else 'plddts'
     f.write(json.dumps(
         {label: ranking_confidences, 'order': ranked_order}, indent=4))
 
