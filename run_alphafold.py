@@ -156,17 +156,25 @@ def predict_structure(
   if not os.path.exists(msa_output_dir):
     os.makedirs(msa_output_dir)
 
-  # Get features.
+  # Get features, loading them from storage if they have already been saved to storage.
   t_0 = time.time()
-  if is_prokaryote is None:
-    feature_dict = data_pipeline.process(
-        input_fasta_path=fasta_path,
-        msa_output_dir=msa_output_dir)
+  features_output_path = os.path.join(output_dir, 'features.pkl')
+  if os.path.isfile(features_output_path):
+      with open(features_output_path, 'rb') as f:
+          feature_dict = pickle.load(f)
   else:
-    feature_dict = data_pipeline.process(
-        input_fasta_path=fasta_path,
-        msa_output_dir=msa_output_dir,
-        is_prokaryote=is_prokaryote)
+      if is_prokaryote is None:
+          feature_dict = data_pipeline.process(
+              f=fasta_path,
+              msa_output_dir=msa_output_dir)
+      else:
+          feature_dict = data_pipeline.process(
+              input_fasta_path=fasta_path,
+              msa_output_dir=msa_output_dir,
+              is_prokaryote=is_prokaryote)
+      # Write out features as a pickled dictionary.
+      with open(features_output_path, 'wb') as f:
+          pickle.dump(feature_dict, f, protocol=4)
   timings['features'] = time.time() - t_0
 
   # Write out features as a pickled dictionary.
@@ -178,72 +186,74 @@ def predict_structure(
   relaxed_pdbs = {}
   ranking_confidences = {}
 
-  # Run the models.
+  # Run the models, ignoring FASTA files for which relaxed structures have already been predicted.
   num_models = len(model_runners)
   for model_index, (model_name, model_runner) in enumerate(
       model_runners.items()):
     logging.info('Running model %s on %s', model_name, fasta_name)
     t_0 = time.time()
-    model_random_seed = model_index + random_seed * num_models
-    processed_feature_dict = model_runner.process_features(
-        feature_dict, random_seed=model_random_seed)
-    timings[f'process_features_{model_name}'] = time.time() - t_0
+    relaxed_output_path = os.path.join(output_dir, f'relaxed_{model_name}.pdb')
+    if not os.path.isfile(relaxed_output_path):
+        model_random_seed = model_index + random_seed * num_models
+        processed_feature_dict = model_runner.process_features(
+            feature_dict, random_seed=model_random_seed)
+        timings[f'process_features_{model_name}'] = time.time() - t_0
 
-    t_0 = time.time()
-    prediction_result = model_runner.predict(processed_feature_dict,
-                                             random_seed=model_random_seed)
-    t_diff = time.time() - t_0
-    timings[f'predict_and_compile_{model_name}'] = t_diff
-    logging.info(
-        'Total JAX model %s on %s predict time (includes compilation time, see --benchmark): %.1fs',
-        model_name, fasta_name, t_diff)
+        t_0 = time.time()
+        prediction_result = model_runner.predict(processed_feature_dict,
+                                                 random_seed=model_random_seed)
+        t_diff = time.time() - t_0
+        timings[f'predict_and_compile_{model_name}'] = t_diff
+        logging.info(
+            'Total JAX model %s on %s predict time (includes compilation time, see --benchmark): %.1fs',
+            model_name, fasta_name, t_diff)
 
-    if benchmark:
-      t_0 = time.time()
-      model_runner.predict(processed_feature_dict,
-                           random_seed=model_random_seed)
-      t_diff = time.time() - t_0
-      timings[f'predict_benchmark_{model_name}'] = t_diff
-      logging.info(
-          'Total JAX model %s on %s predict time (excludes compilation time): %.1fs',
-          model_name, fasta_name, t_diff)
+        if benchmark:
+          t_0 = time.time()
+          model_runner.predict(processed_feature_dict,
+                               random_seed=model_random_seed)
+          t_diff = time.time() - t_0
+          timings[f'predict_benchmark_{model_name}'] = t_diff
+          logging.info(
+              'Total JAX model %s on %s predict time (excludes compilation time): %.1fs',
+              model_name, fasta_name, t_diff)
 
-    plddt = prediction_result['plddt']
-    ranking_confidences[model_name] = prediction_result['ranking_confidence']
+        plddt = prediction_result['plddt']
+        ranking_confidences[model_name] = prediction_result['ranking_confidence']
 
-    # Save the model outputs.
-    result_output_path = os.path.join(output_dir, f'result_{model_name}.pkl')
-    with open(result_output_path, 'wb') as f:
-      pickle.dump(prediction_result, f, protocol=4)
+        # Save the model outputs.
+        result_output_path = os.path.join(output_dir, f'result_{model_name}.pkl')
+        with open(result_output_path, 'wb') as f:
+          pickle.dump(prediction_result, f, protocol=4)
 
-    # Add the predicted LDDT in the b-factor column.
-    # Note that higher predicted LDDT value means higher model confidence.
-    plddt_b_factors = np.repeat(
-        plddt[:, None], residue_constants.atom_type_num, axis=-1)
-    unrelaxed_protein = protein.from_prediction(
-        features=processed_feature_dict,
-        result=prediction_result,
-        b_factors=plddt_b_factors,
-        remove_leading_feature_dimension=not model_runner.multimer_mode)
+        # Add the predicted LDDT in the b-factor column.
+        # Note that higher predicted LDDT value means higher model confidence.
+        plddt_b_factors = np.repeat(
+            plddt[:, None], residue_constants.atom_type_num, axis=-1)
+        unrelaxed_protein = protein.from_prediction(
+            features=processed_feature_dict,
+            result=prediction_result,
+            b_factors=plddt_b_factors,
+            remove_leading_feature_dimension=not model_runner.multimer_mode)
 
-    unrelaxed_pdbs[model_name] = protein.to_pdb(unrelaxed_protein)
-    unrelaxed_pdb_path = os.path.join(output_dir, f'unrelaxed_{model_name}.pdb')
-    with open(unrelaxed_pdb_path, 'w') as f:
-      f.write(unrelaxed_pdbs[model_name])
+        unrelaxed_pdbs[model_name] = protein.to_pdb(unrelaxed_protein)
+        unrelaxed_pdb_path = os.path.join(output_dir, f'unrelaxed_{model_name}.pdb')
+        with open(unrelaxed_pdb_path, 'w') as f:
+          f.write(unrelaxed_pdbs[model_name])
 
-    if amber_relaxer:
-      # Relax the prediction.
-      t_0 = time.time()
-      relaxed_pdb_str, _, _ = amber_relaxer.process(prot=unrelaxed_protein)
-      timings[f'relax_{model_name}'] = time.time() - t_0
+        if amber_relaxer:
+          # Relax the prediction.
+          t_0 = time.time()
+          relaxed_pdb_str, _, _ = amber_relaxer.process(prot=unrelaxed_protein)
+          timings[f'relax_{model_name}'] = time.time() - t_0
 
-      relaxed_pdbs[model_name] = relaxed_pdb_str
+          relaxed_pdbs[model_name] = relaxed_pdb_str
 
-      # Save the relaxed PDB.
-      relaxed_output_path = os.path.join(
-          output_dir, f'relaxed_{model_name}.pdb')
-      with open(relaxed_output_path, 'w') as f:
-        f.write(relaxed_pdb_str)
+          # Save the relaxed PDB.
+          relaxed_output_path = os.path.join(
+              output_dir, f'relaxed_{model_name}.pdb')
+          with open(relaxed_output_path, 'w') as f:
+            f.write(relaxed_pdb_str)
 
   # Rank by model confidence and write out relaxed PDBs in rank order.
   ranked_order = []
