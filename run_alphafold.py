@@ -165,7 +165,7 @@ def predict_structure(
   else:
       if is_prokaryote is None:
           feature_dict = data_pipeline.process(
-              f=fasta_path,
+              input_fasta_path=fasta_path,
               msa_output_dir=msa_output_dir)
       else:
           feature_dict = data_pipeline.process(
