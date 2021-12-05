@@ -6,11 +6,11 @@
 
 # Define absolute paths for proper script execution
 export MINICONDA_DIR=/home/"$USER"/miniconda3
-export PROJ_DIR=/home/"$USER"/alpha_non_docker
+export PROJ_DIR=/home/"$USER"/alphafold_non_docker
 export DATA_DIR=/home/"$USER"/alphafold_databases
 export OUTPUT_DIR=/home/"$USER"/alphafold_outputs
 
-# Activate Conda environment for 'alpha_non_docker' project
+# Activate Conda environment for 'alphafold_non_docker' project
 source "$MINICONDA_DIR"/bin/activate
 conda activate alphafold_non_docker
 
