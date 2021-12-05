@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -N 4
 #SBATCH -t 24:00:00
-#SBATCH --mem 64G
+#SBATCH --mem 224G
 #SBATCH -J simultaneous-jobsteps
 
 # Define absolute paths for proper script execution
