@@ -200,8 +200,8 @@ will download parameters for:
     -a <gpu_devices>  Comma separated list of devices to pass to 'CUDA_VISIBLE_DEVICES' (default: 0)
     -m <model_preset>  Choose preset model configuration - the monomer model (monomer), the monomer model with extra ensembling (monomer_casp14), monomer model with pTM head (monomer_ptm), or multimer model (multimer) (default: monomer)
     -p <db_preset>       Choose preset MSA database configuration - smaller genetic database config (reduced_dbs) or full genetic database config (full_dbs) (default: full_dbs)
-    -u <use_precomputed_msas>       Choose preset MSA database configuration - smaller genetic database config (reduced_dbs) or full genetic database config (full_dbs) (default: full_dbs)
-    -r <remove_msas_after_use>       Whether, after structure prediction(s), to delete MSAs that have been written to disk to significantly free up storage space. (default: False)
+    -u <use_precomputed_msas>       Whether to read MSAs that have been written to disk. WARNING: This will not check if the sequence, database or configuration have changed. (default: false)
+    -r <remove_msas_after_use>       Whether, after structure prediction(s), to delete MSAs that have been written to disk to significantly free up storage space. (default: false)
     -i <is_prokaryote>   Optional for multimer system, not used by the single chain system. This should contain a boolean specifying true where the target complex is from a prokaryote, and false where it is not, or where the origin is unknown. These values determine the pairing method for the MSA (default: false)
     ```
 
