@@ -20,12 +20,13 @@ usage() {
   echo "-m <model_preset>  Choose preset model configuration - the monomer model (monomer), the monomer model with extra ensembling (monomer_casp14), monomer model with pTM head (monomer_ptm), or multimer model (multimer) (default: monomer)"
   echo "-p <db_preset>       Choose preset MSA database configuration - smaller genetic database config (reduced_dbs) or full genetic database config (full_dbs) (default: full_dbs)"
   echo "-u <use_precomputed_msas>       Choose preset MSA database configuration - smaller genetic database config (reduced_dbs) or full genetic database config (full_dbs) (default: full_dbs)"
+  echo "-r <remove_msas_after_use>       Whether, after structure prediction(s), to delete MSAs that have been written to disk to significantly free up storage space. (default: False)"
   echo "-i <is_prokaryote>   Optional for multimer system, not used by the single chain system. This should contain a boolean specifying true where the target complex is from a prokaryote, and false where it is not, or where the origin is unknown. These values determine the pairing method for the MSA (default: false)"
   echo ""
   exit 1
 }
 
-while getopts ":d:o:f:t:n:b:g:a:m:p:u:i" i; do
+while getopts ":d:o:f:t:n:b:g:a:m:p:u:r:i" i; do
   case "${i}" in
   d)
     data_dir=$OPTARG
@@ -60,6 +61,9 @@ while getopts ":d:o:f:t:n:b:g:a:m:p:u:i" i; do
   u)
     use_precomputed_msas=$OPTARG
     ;;
+  r)
+    remove_msas_after_use=$OPTARG
+    ;;
   i)
     is_prokaryote=$OPTARG
     ;;
@@ -93,6 +97,10 @@ fi
 
 if [[ "$use_precomputed_msas" == "" ]]; then
   use_precomputed_msas=false
+fi
+
+if [[ "$remove_msas_after_use" == "" ]]; then
+  remove_msas_after_use=false
 fi
 
 if [[ "$is_prokaryote" == "" ]]; then
@@ -157,11 +165,11 @@ kalign_binary_path=$(which kalign)
 # Run AlphaFold with required parameters
 # 'reduced_dbs' preset database does not use bfd and uniclust30 databases
 if [[ "$db_preset" == "reduced_dbs" && "$model_preset" == "monomer" ]]; then
-  $(python $alphafold_script --hhblits_binary_path=$hhblits_binary_path --hhsearch_binary_path=$hhsearch_binary_path --jackhmmer_binary_path=$jackhmmer_binary_path --kalign_binary_path=$kalign_binary_path --small_bfd_database_path=$small_bfd_database_path --mgnify_database_path=$mgnify_database_path --template_mmcif_dir=$template_mmcif_dir --obsolete_pdbs_path=$obsolete_pdbs_path --pdb70_database_path=$pdb70_database_path --uniref90_database_path=$uniref90_database_path --data_dir=$data_dir --output_dir=$output_dir --fasta_paths=$fasta_path --max_template_date=$max_template_date --model_preset=$model_preset --db_preset=$db_preset --benchmark=$benchmark --use_precomputed_msas=$use_precomputed_msas --logtostderr)
+  $(python $alphafold_script --hhblits_binary_path=$hhblits_binary_path --hhsearch_binary_path=$hhsearch_binary_path --jackhmmer_binary_path=$jackhmmer_binary_path --kalign_binary_path=$kalign_binary_path --small_bfd_database_path=$small_bfd_database_path --mgnify_database_path=$mgnify_database_path --template_mmcif_dir=$template_mmcif_dir --obsolete_pdbs_path=$obsolete_pdbs_path --pdb70_database_path=$pdb70_database_path --uniref90_database_path=$uniref90_database_path --data_dir=$data_dir --output_dir=$output_dir --fasta_paths=$fasta_path --max_template_date=$max_template_date --model_preset=$model_preset --db_preset=$db_preset --benchmark=$benchmark --use_precomputed_msas=$use_precomputed_msas --remove_msas_after_use=$remove_msas_after_use --logtostderr)
 elif [[ "$db_preset" == "reduced_dbs" ]]; then
-  $(python $alphafold_script --hhblits_binary_path=$hhblits_binary_path --hhsearch_binary_path=$hhsearch_binary_path --jackhmmer_binary_path=$jackhmmer_binary_path --kalign_binary_path=$kalign_binary_path --small_bfd_database_path=$small_bfd_database_path --mgnify_database_path=$mgnify_database_path --template_mmcif_dir=$template_mmcif_dir --obsolete_pdbs_path=$obsolete_pdbs_path --pdb_seqres_database_path=$pdb_seqres_database_path --uniprot_database_path=$uniprot_database_path --uniref90_database_path=$uniref90_database_path --data_dir=$data_dir --output_dir=$output_dir --fasta_paths=$fasta_path --max_template_date=$max_template_date --model_preset=$model_preset --db_preset=$db_preset --benchmark=$benchmark --use_precomputed_msas=$use_precomputed_msas --logtostderr --is_prokaryote_list=$is_prokaryote)
+  $(python $alphafold_script --hhblits_binary_path=$hhblits_binary_path --hhsearch_binary_path=$hhsearch_binary_path --jackhmmer_binary_path=$jackhmmer_binary_path --kalign_binary_path=$kalign_binary_path --small_bfd_database_path=$small_bfd_database_path --mgnify_database_path=$mgnify_database_path --template_mmcif_dir=$template_mmcif_dir --obsolete_pdbs_path=$obsolete_pdbs_path --pdb_seqres_database_path=$pdb_seqres_database_path --uniprot_database_path=$uniprot_database_path --uniref90_database_path=$uniref90_database_path --data_dir=$data_dir --output_dir=$output_dir --fasta_paths=$fasta_path --max_template_date=$max_template_date --model_preset=$model_preset --db_preset=$db_preset --benchmark=$benchmark --use_precomputed_msas=$use_precomputed_msas --remove_msas_after_use=$remove_msas_after_use --logtostderr --is_prokaryote_list=$is_prokaryote)
 elif [[ "$db_preset" == "full_dbs" && "$model_preset" == "monomer" ]]; then
-  $(python $alphafold_script --hhblits_binary_path=$hhblits_binary_path --hhsearch_binary_path=$hhsearch_binary_path --jackhmmer_binary_path=$jackhmmer_binary_path --kalign_binary_path=$kalign_binary_path --bfd_database_path=$bfd_database_path --mgnify_database_path=$mgnify_database_path --template_mmcif_dir=$template_mmcif_dir --obsolete_pdbs_path=$obsolete_pdbs_path --pdb70_database_path=$pdb70_database_path --uniclust30_database_path=$uniclust30_database_path --uniref90_database_path=$uniref90_database_path --data_dir=$data_dir --output_dir=$output_dir --fasta_paths=$fasta_path --max_template_date=$max_template_date --model_preset=$model_preset --db_preset=$db_preset --benchmark=$benchmark --use_precomputed_msas=$use_precomputed_msas --logtostderr)
+  $(python $alphafold_script --hhblits_binary_path=$hhblits_binary_path --hhsearch_binary_path=$hhsearch_binary_path --jackhmmer_binary_path=$jackhmmer_binary_path --kalign_binary_path=$kalign_binary_path --bfd_database_path=$bfd_database_path --mgnify_database_path=$mgnify_database_path --template_mmcif_dir=$template_mmcif_dir --obsolete_pdbs_path=$obsolete_pdbs_path --pdb70_database_path=$pdb70_database_path --uniclust30_database_path=$uniclust30_database_path --uniref90_database_path=$uniref90_database_path --data_dir=$data_dir --output_dir=$output_dir --fasta_paths=$fasta_path --max_template_date=$max_template_date --model_preset=$model_preset --db_preset=$db_preset --benchmark=$benchmark --use_precomputed_msas=$use_precomputed_msas --remove_msas_after_use=$remove_msas_after_use --logtostderr)
 else
-  $(python $alphafold_script --hhblits_binary_path=$hhblits_binary_path --hhsearch_binary_path=$hhsearch_binary_path --jackhmmer_binary_path=$jackhmmer_binary_path --kalign_binary_path=$kalign_binary_path --bfd_database_path=$bfd_database_path --mgnify_database_path=$mgnify_database_path --template_mmcif_dir=$template_mmcif_dir --obsolete_pdbs_path=$obsolete_pdbs_path --pdb_seqres_database_path=$pdb_seqres_database_path --uniclust30_database_path=$uniclust30_database_path --uniprot_database_path=$uniprot_database_path --uniref90_database_path=$uniref90_database_path --data_dir=$data_dir --output_dir=$output_dir --fasta_paths=$fasta_path --max_template_date=$max_template_date --model_preset=$model_preset --db_preset=$db_preset --benchmark=$benchmark --use_precomputed_msas=$use_precomputed_msas --logtostderr --is_prokaryote_list=$is_prokaryote)
+  $(python $alphafold_script --hhblits_binary_path=$hhblits_binary_path --hhsearch_binary_path=$hhsearch_binary_path --jackhmmer_binary_path=$jackhmmer_binary_path --kalign_binary_path=$kalign_binary_path --bfd_database_path=$bfd_database_path --mgnify_database_path=$mgnify_database_path --template_mmcif_dir=$template_mmcif_dir --obsolete_pdbs_path=$obsolete_pdbs_path --pdb_seqres_database_path=$pdb_seqres_database_path --uniclust30_database_path=$uniclust30_database_path --uniprot_database_path=$uniprot_database_path --uniref90_database_path=$uniref90_database_path --data_dir=$data_dir --output_dir=$output_dir --fasta_paths=$fasta_path --max_template_date=$max_template_date --model_preset=$model_preset --db_preset=$db_preset --benchmark=$benchmark --use_precomputed_msas=$use_precomputed_msas --remove_msas_after_use=$remove_msas_after_use --logtostderr --is_prokaryote_list=$is_prokaryote)
 fi

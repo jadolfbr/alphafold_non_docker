@@ -116,6 +116,9 @@ flags.DEFINE_integer('random_seed', None, 'The random seed for the data '
 flags.DEFINE_boolean('use_precomputed_msas', False, 'Whether to read MSAs that '
                      'have been written to disk. WARNING: This will not check '
                      'if the sequence, database or configuration have changed.')
+flags.DEFINE_boolean('remove_msas_after_use', False, 'Whether, after structure '
+                     'predictions, to delete MSAs that have been written to disk to '
+                     'significantly free up storage space.')
 
 FLAGS = flags.FLAGS
 
@@ -280,6 +283,16 @@ def predict_structure(
   with open(timings_output_path, 'w') as f:
     f.write(json.dumps(timings, indent=4))
 
+  if FLAGS.remove_msas_after_use:
+      # Remove MSAs' .sto files after using them for structure prediction(s), to significantly free up storage space
+      msa_extensions_to_remove = ['.sto']
+      for root_dir, dir_names, filenames in os.walk(msa_output_dir):
+          for filename in filenames:
+              if filename.endswith(msa_extensions_to_remove):
+                  try:
+                      os.remove(os.path.join(root_dir, filename))
+                  except OSError:
+                      logging.info(f'Error while deleting MSA file {os.path.join(root, filename)}')
 
 def main(argv):
   if len(argv) > 1:
