@@ -156,7 +156,7 @@ will download parameters for:
     git clone https://github.com/amorehead/alphafold_multimer_non_docker
     
     # Change to project directory:
-    cd alphafold_non_docker
+    cd alphafold_multimer_non_docker
     AF2_DIR=$(pwd)
     
     # Set up Conda environment locally:
