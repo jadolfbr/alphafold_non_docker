@@ -24,8 +24,8 @@ if [[ $# -eq 0 ]]; then
     exit 1
 fi
 
-if ! command -v aria2c &> /dev/null ; then
-    echo "Error: aria2c could not be found. Please install aria2c (sudo apt install aria2)."
+if ! command -v wget &> /dev/null ; then
+    echo "Error: wget could not be found. Please install wget (sudo apt install wget)."
     exit 1
 fi
 
@@ -35,4 +35,4 @@ SOURCE_URL="ftp://ftp.wwpdb.org/pub/pdb/derived_data/pdb_seqres.txt"
 BASENAME=$(basename "${SOURCE_URL}")
 
 mkdir --parents "${ROOT_DIR}"
-aria2c "${SOURCE_URL}" --dir="${ROOT_DIR}"
+wget "${SOURCE_URL}" --directory="${ROOT_DIR}"
