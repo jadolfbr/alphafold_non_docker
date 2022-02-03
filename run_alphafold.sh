@@ -112,10 +112,11 @@ if [[ "$db_preset" != "full_dbs" && "$db_preset" != "reduced_dbs" ]]; then
   db_preset="full_dbs"
 fi
 
-# This bash script looks for the run_alphafold.py script in its current working directory
-# If it does not exist, then exits
+
 current_working_dir=$(pwd)
-alphafold_script="$current_working_dir/run_alphafold.py"
+#JAB - Add script directory so we do not need to run from alphafold directory
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+alphafold_script="$SCRIPT_DIR/run_alphafold.py"
 
 if [ ! -f "$alphafold_script" ]; then
   echo "Alphafold python script $alphafold_script does not exist."
